@@ -1,0 +1,10 @@
+# OS / IDE Artifacts
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+.vscode/
+.idea/
+
+# Antigravity artifacts
+.system_generated/

@@ -1,0 +1,224 @@
+[
+  {
+    "timestamp_iso": "2026-09-23T14:00:00.000Z",
+    "mission_day": 214,
+    "crew_id": "CDR-01",
+    "crew_name": "Sarah Vance",
+    "flight_phase": "Deep Space Cruise (Mars Transit)",
+    "scenario_state": "Nominal",
+    "devices_telemetry": {
+      "biopatch_vitaljacket": {
+        "device_type": "Continuous 3-Lead ECG + IMU Biopatch",
+        "heart_rate_bpm": 72,
+        "hrv_rmssd_ms": 68.4,
+        "qrs_interval_ms": 88,
+        "qt_interval_ms": 390,
+        "arrhythmia_flag": false,
+        "snr_db": 31.6
+      },
+      "chest_seismocardiograph": {
+        "device_type": "High-G 6-DOF Micro-Accelerometer (SCG)",
+        "pre_ejection_period_pep_ms": 105,
+        "left_ventricular_ejection_time_lvet_ms": 285,
+        "stroke_volume_ml": 78.2,
+        "cardiac_contractility_index": 0.94
+      },
+      "ring_finger_photoplethysmograph": {
+        "device_type": "Multi-Wavelength PPG / Pulse Oximeter",
+        "spo2_percent": 98.8,
+        "pulse_arrival_time_pat_ms": 182,
+        "dicrotic_notch_integrity_ratio": 0.91,
+        "respiration_rate_brpm": 14.1
+      },
+      "portable_sweat_saliva_lab_on_chip": {
+        "device_type": "Microfluidic Point-of-Care Biosensor",
+        "salivary_cortisol_nmol_l": 12.4,
+        "salivary_ebv_dna_copies_ml": 42,
+        "salivary_cmv_dna_copies_ml": 18,
+        "secretory_iga_ug_ml": 184.2,
+        "cytokine_il6_pg_ml": 2.1
+      },
+      "retinal_spectral_oct_tonometer": {
+        "device_type": "Compact Space-Grade Optical Coherence Tomography",
+        "peripapillary_rnfl_thickness_um": 98.2,
+        "intraocular_pressure_iop_mmhg": 14.2,
+        "optic_nerve_sheath_diameter_mm": 5.2,
+        "choroidal_folds_detected": false
+      },
+      "ambient_and_personal_radiation_dosimeter": {
+        "device_type": "Silicon Pixel Detector & Tissue Equivalent Proportional Counter",
+        "cumulative_mission_dose_msv": 84.5,
+        "instantaneous_flux_msv_per_hour": 0.18,
+        "solar_particle_event_flag": false,
+        "high_z_gcr_hit_count_per_hr": 240
+      },
+      "ambient_cabin_radar_and_voice_analyzer": {
+        "device_type": "UWB Non-contact Radar & Acoustic Vocal Monitor",
+        "pvt_reaction_latency_ms": 232,
+        "vocal_acoustic_jitter_percent": 0.42,
+        "rem_sleep_duration_hrs": 1.85,
+        "total_sleep_duration_hrs": 7.4
+      }
+    },
+    "edge_ai_risk_indices": {
+      "cardiovascular_deconditioning_risk": 0.08,
+      "sans_neuro_ocular_risk": 0.12,
+      "radiation_damage_risk": 0.04,
+      "viral_reactivation_risk": 0.09,
+      "circadian_burnout_risk": 0.11
+    },
+    "cdss_triage_decision": {
+      "triage_state": "NOMINAL",
+      "action_required": false,
+      "recommended_countermeasure": "Routine ARED eccentric protocol (45m) & morning 480nm phototherapy"
+    }
+  },
+  {
+    "timestamp_iso": "2026-09-23T14:30:00.000Z",
+    "mission_day": 214,
+    "crew_id": "CDR-01",
+    "crew_name": "Sarah Vance",
+    "flight_phase": "Deep Space Cruise (Mars Transit)",
+    "scenario_state": "SANS_Stage_1_PreSymptomatic",
+    "devices_telemetry": {
+      "biopatch_vitaljacket": {
+        "device_type": "Continuous 3-Lead ECG + IMU Biopatch",
+        "heart_rate_bpm": 76,
+        "hrv_rmssd_ms": 58.2,
+        "qrs_interval_ms": 89,
+        "qt_interval_ms": 394,
+        "arrhythmia_flag": false,
+        "snr_db": 30.8
+      },
+      "chest_seismocardiograph": {
+        "device_type": "High-G 6-DOF Micro-Accelerometer (SCG)",
+        "pre_ejection_period_pep_ms": 118,
+        "left_ventricular_ejection_time_lvet_ms": 272,
+        "stroke_volume_ml": 71.4,
+        "cardiac_contractility_index": 0.88
+      },
+      "ring_finger_photoplethysmograph": {
+        "device_type": "Multi-Wavelength PPG / Pulse Oximeter",
+        "spo2_percent": 98.4,
+        "pulse_arrival_time_pat_ms": 178,
+        "dicrotic_notch_integrity_ratio": 0.85,
+        "respiration_rate_brpm": 15.0
+      },
+      "portable_sweat_saliva_lab_on_chip": {
+        "device_type": "Microfluidic Point-of-Care Biosensor",
+        "salivary_cortisol_nmol_l": 16.8,
+        "salivary_ebv_dna_copies_ml": 68,
+        "salivary_cmv_dna_copies_ml": 30,
+        "secretory_iga_ug_ml": 162.0,
+        "cytokine_il6_pg_ml": 3.4
+      },
+      "retinal_spectral_oct_tonometer": {
+        "device_type": "Compact Space-Grade Optical Coherence Tomography",
+        "peripapillary_rnfl_thickness_um": 124.6,
+        "intraocular_pressure_iop_mmhg": 21.8,
+        "optic_nerve_sheath_diameter_mm": 6.1,
+        "choroidal_folds_detected": true
+      },
+      "ambient_and_personal_radiation_dosimeter": {
+        "device_type": "Silicon Pixel Detector & Tissue Equivalent Proportional Counter",
+        "cumulative_mission_dose_msv": 84.6,
+        "instantaneous_flux_msv_per_hour": 0.19,
+        "solar_particle_event_flag": false,
+        "high_z_gcr_hit_count_per_hr": 245
+      },
+      "ambient_cabin_radar_and_voice_analyzer": {
+        "device_type": "UWB Non-contact Radar & Acoustic Vocal Monitor",
+        "pvt_reaction_latency_ms": 248,
+        "vocal_acoustic_jitter_percent": 0.49,
+        "rem_sleep_duration_hrs": 1.60,
+        "total_sleep_duration_hrs": 6.8
+      }
+    },
+    "edge_ai_risk_indices": {
+      "cardiovascular_deconditioning_risk": 0.24,
+      "sans_neuro_ocular_risk": 0.74,
+      "radiation_damage_risk": 0.04,
+      "viral_reactivation_risk": 0.12,
+      "circadian_burnout_risk": 0.18
+    },
+    "cdss_triage_decision": {
+      "triage_state": "PRE_SYMPTOMATIC_WARNING",
+      "action_required": true,
+      "recommended_countermeasure": "Engage Lower Body Negative Pressure (LBNP) @ -35 mmHg for 2.5h; administer oral Acetazolamide 125mg BID"
+    }
+  },
+  {
+    "timestamp_iso": "2026-09-23T15:00:00.000Z",
+    "mission_day": 214,
+    "crew_id": "CDR-01",
+    "crew_name": "Sarah Vance",
+    "flight_phase": "Deep Space Cruise (Mars Transit)",
+    "scenario_state": "Solar_Particle_Event_Emergency",
+    "devices_telemetry": {
+      "biopatch_vitaljacket": {
+        "device_type": "Continuous 3-Lead ECG + IMU Biopatch",
+        "heart_rate_bpm": 98,
+        "hrv_rmssd_ms": 32.1,
+        "qrs_interval_ms": 86,
+        "qt_interval_ms": 372,
+        "arrhythmia_flag": false,
+        "snr_db": 29.5
+      },
+      "chest_seismocardiograph": {
+        "device_type": "High-G 6-DOF Micro-Accelerometer (SCG)",
+        "pre_ejection_period_pep_ms": 112,
+        "left_ventricular_ejection_time_lvet_ms": 260,
+        "stroke_volume_ml": 68.0,
+        "cardiac_contractility_index": 0.85
+      },
+      "ring_finger_photoplethysmograph": {
+        "device_type": "Multi-Wavelength PPG / Pulse Oximeter",
+        "spo2_percent": 97.9,
+        "pulse_arrival_time_pat_ms": 169,
+        "dicrotic_notch_integrity_ratio": 0.88,
+        "respiration_rate_brpm": 20.4
+      },
+      "portable_sweat_saliva_lab_on_chip": {
+        "device_type": "Microfluidic Point-of-Care Biosensor",
+        "salivary_cortisol_nmol_l": 34.2,
+        "salivary_ebv_dna_copies_ml": 110,
+        "salivary_cmv_dna_copies_ml": 45,
+        "secretory_iga_ug_ml": 130.0,
+        "cytokine_il6_pg_ml": 7.8
+      },
+      "retinal_spectral_oct_tonometer": {
+        "device_type": "Compact Space-Grade Optical Coherence Tomography",
+        "peripapillary_rnfl_thickness_um": 99.1,
+        "intraocular_pressure_iop_mmhg": 15.0,
+        "optic_nerve_sheath_diameter_mm": 5.3,
+        "choroidal_folds_detected": false
+      },
+      "ambient_and_personal_radiation_dosimeter": {
+        "device_type": "Silicon Pixel Detector & Tissue Equivalent Proportional Counter",
+        "cumulative_mission_dose_msv": 103.0,
+        "instantaneous_flux_msv_per_hour": 4.25,
+        "solar_particle_event_flag": true,
+        "high_z_gcr_hit_count_per_hr": 4850
+      },
+      "ambient_cabin_radar_and_voice_analyzer": {
+        "device_type": "UWB Non-contact Radar & Acoustic Vocal Monitor",
+        "pvt_reaction_latency_ms": 288,
+        "vocal_acoustic_jitter_percent": 0.88,
+        "rem_sleep_duration_hrs": 1.20,
+        "total_sleep_duration_hrs": 5.5
+      }
+    },
+    "edge_ai_risk_indices": {
+      "cardiovascular_deconditioning_risk": 0.35,
+      "sans_neuro_ocular_risk": 0.15,
+      "radiation_damage_risk": 0.92,
+      "viral_reactivation_risk": 0.28,
+      "circadian_burnout_risk": 0.45
+    },
+    "cdss_triage_decision": {
+      "triage_state": "CRITICAL_ENVIRONMENTAL_SPE",
+      "action_required": true,
+      "recommended_countermeasure": "Immediate shelter evacuation to Water-Wall Heavy Storm Bay; administer IV Amifostine 500mg and high-dose antioxidant adjuvant"
+    }
+  }
+]
