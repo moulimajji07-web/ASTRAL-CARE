@@ -13,7 +13,7 @@
 
   <!-- EMERGENCY SPE / HAZARD AUDIO-VISUAL BANNER -->
   <div id="emergencyBanner" class="emergency-banner">
-    <span id="emergencyBannerText">⚠️ CRITICAL HEALTH ALERT DETECTED</span>
+    <span id="emergencyBannerText">⚠️ CRITICAL SOLAR PARTICLE EVENT (SPE) IN PROGRESS - GCR FLUX ELEVATED - SEAL HABITAT SECTORS</span>
     <button id="btnDismissBanner" style="background: rgba(0,0,0,0.4); color: #fff; border: 1px solid #fff; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px;">ACKNOWLEDGE</button>
   </div>
 
@@ -25,26 +25,36 @@
       </div>
       <div class="brand-titles">
         <h1>PROJECT ASTRAL-CARE</h1>
-        <div class="badge-sub">AUTONOMOUS EDGE CLINICAL INTELLIGENCE // DEEP-SPACE ARCHITECTURE</div>
+        <div class="badge-sub">AUTONOMOUS EDGE CLINICAL INTELLIGENCE // DEEP-SPACE MARS TRANSIT</div>
       </div>
     </div>
 
     <!-- MISSION TELEMETRY METRICS -->
     <div class="mission-meta-strip">
       <div class="meta-chip">
-        <span class="label">DATASET FEED STATUS</span>
-        <span class="val highlight" id="feedStatus">STANDBY (AWAITING INPUT)</span>
+        <span class="label">MISSION ELAPSED TIME</span>
+        <span class="val highlight" id="metClock">MET 214d : 16h : 42m : 18s</span>
       </div>
       <div class="meta-chip">
-        <span class="label">TELEMETRY INGESTION</span>
-        <span class="val" id="ingestMeta">0 SAMPLES LOADED</span>
+        <span class="label">EARTH COMM LATENCY</span>
+        <span class="val warn">22m 14s (AUTONOMOUS ONLY)</span>
+      </div>
+      <div class="meta-chip">
+        <span class="label">FEED STATUS</span>
+        <span class="val highlight" id="feedStatus">LIVE SIMULATION ACTIVE</span>
       </div>
       
-      <!-- DATASET INGESTION ACTION -->
+      <!-- DATASET INGESTION & CREW PICKER -->
       <div class="crew-selector-container">
+        <select id="crewSelect" class="crew-select-dropdown">
+          <option value="cdr">CDR. Sarah Vance (Commander)</option>
+          <option value="plt">PLT. Alex Chen (Pilot)</option>
+          <option value="fe1">FE-1. Dr. Maya Torres (Surgeon)</option>
+          <option value="fe2">FE-2. Marcus Sterling (Robotics)</option>
+        </select>
         <input type="file" id="datasetFileInput" accept=".json,.csv" style="display: none;">
-        <button id="btnLoadDataset" style="background: rgba(0, 229, 255, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-family: var(--font-mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s ease;">
-          📂 LOAD TELEMETRY DATASET
+        <button id="btnLoadDataset" style="background: rgba(0, 229, 255, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-family: var(--font-mono); font-size: 10px; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: 700;">
+          📂 LOAD FILE
         </button>
       </div>
     </div>
@@ -60,7 +70,7 @@
       <div class="hud-card">
         <div class="card-title-bar">
           <h2><span class="status-dot" id="statusDot"></span> BIOMETRIC STATUS MATRIX</h2>
-          <span class="card-badge" id="telemetryStateBadge">IDLE</span>
+          <span class="card-badge" id="telemetryStateBadge">LIVE WEARABLE</span>
         </div>
 
         <div class="astronaut-hero">
@@ -70,47 +80,47 @@
             </svg>
           </div>
           <div class="astronaut-details">
-            <div class="astro-name" id="crewName">-- [Awaiting Subject] --</div>
-            <div class="astro-role" id="crewRole">No telemetry stream attached</div>
-            <div class="astro-sub" id="crewSub">Load a dataset file to initialize live telemetry analysis</div>
+            <div class="astro-name" id="crewName">CDR. Sarah Vance</div>
+            <div class="astro-role" id="crewRole">Mission Commander / EVA Lead</div>
+            <div class="astro-sub" id="crewSub">Age: 38 | Blood: O+ | Basal HRV: 68ms</div>
           </div>
         </div>
 
         <div class="vitals-grid">
           <div class="vital-tile">
             <div class="v-head"><span>HEART RATE</span><span>ECG</span></div>
-            <div class="v-value"><span id="valHR">--</span><span class="v-unit">BPM</span></div>
-            <div class="v-status" id="statusHR">NO SIGNAL</div>
+            <div class="v-value"><span id="valHR">72</span><span class="v-unit">BPM</span></div>
+            <div class="v-status" id="statusHR">NOMINAL SINUS</div>
           </div>
 
           <div class="vital-tile">
             <div class="v-head"><span>PRE-EJECTION PERIOD</span><span>SCG/ECG</span></div>
-            <div class="v-value"><span id="valPEP">--</span><span class="v-unit">ms</span></div>
-            <div class="v-status" id="statusPEP">NO SIGNAL</div>
+            <div class="v-value"><span id="valPEP">105</span><span class="v-unit">ms</span></div>
+            <div class="v-status" id="statusPEP">CONTRACTILITY OPTIMAL</div>
           </div>
 
           <div class="vital-tile">
             <div class="v-head"><span>BLOOD OXYGEN</span><span>PPG SpO2</span></div>
-            <div class="v-value"><span id="valSpO2">--</span><span class="v-unit">%</span></div>
-            <div class="v-status" id="statusSpO2">NO SIGNAL</div>
+            <div class="v-value"><span id="valSpO2">98.8</span><span class="v-unit">%</span></div>
+            <div class="v-status" id="statusSpO2">PERFUSION NORMAL</div>
           </div>
 
           <div class="vital-tile">
             <div class="v-head"><span>RESPIRATION</span><span>IMPEDANCE</span></div>
-            <div class="v-value"><span id="valResp">--</span><span class="v-unit">BrPM</span></div>
-            <div class="v-status" id="statusResp">NO SIGNAL</div>
+            <div class="v-value"><span id="valResp">14</span><span class="v-unit">BrPM</span></div>
+            <div class="v-status" id="statusResp">EUPNEIC RHYTHM</div>
           </div>
 
           <div class="vital-tile">
             <div class="v-head"><span>RETINAL RNFL</span><span>OCT SCAN</span></div>
-            <div class="v-value"><span id="valRNFL">--</span><span class="v-unit">µm</span></div>
-            <div class="v-status" id="statusRNFL">NO SCAN</div>
+            <div class="v-value"><span id="valRNFL">98</span><span class="v-unit">µm</span></div>
+            <div class="v-status" id="statusRNFL">NO EDEMA</div>
           </div>
 
           <div class="vital-tile">
             <div class="v-head"><span>TOTAL RADIATION</span><span>DOSIMETER</span></div>
-            <div class="v-value"><span id="valRad">--</span><span class="v-unit">mSv</span></div>
-            <div class="v-status" id="statusRad">NO DOSIMETER</div>
+            <div class="v-value"><span id="valRad">84.5</span><span class="v-unit">mSv</span></div>
+            <div class="v-status" id="statusRad">WITHIN CARE LIMITS</div>
           </div>
         </div>
       </div>
@@ -118,7 +128,7 @@
       <!-- DEEP-SPACE HAZARD PREDICTION WATCHLIST -->
       <div class="hud-card" style="flex: 1;">
         <div class="card-title-bar">
-          <h2><span class="status-dot"></span> PREDICTIVE HAZARD MONITOR</h2>
+          <h2><span class="status-dot"></span> PRE-SYMPTOMATIC HAZARD MONITOR</h2>
           <span class="card-badge">EDGE AI ENGINE</span>
         </div>
 
@@ -127,99 +137,111 @@
           <div class="hazard-item" data-hazard="sans" id="hazardCardSans">
             <div class="hazard-item-head">
               <span class="name">Spaceflight Neuro-ocular (SANS)</span>
-              <span class="risk-badge nominal" id="badgeSans">WAITING</span>
+              <span class="risk-badge nominal" id="badgeSans">NOMINAL (12%)</span>
             </div>
             <div class="hazard-bar-wrap">
-              <div class="hazard-bar-fill" id="barSans" style="width: 0%;"></div>
+              <div class="hazard-bar-fill" id="barSans" style="width: 12%;"></div>
             </div>
-            <div class="hazard-desc" id="descSans">Requires OCT and intraocular pressure stream.</div>
+            <div class="hazard-desc" id="descSans">Microvascular caliber normal. Optic nerve sheath diameter: 5.2mm.</div>
           </div>
 
           <!-- Cardiovascular -->
           <div class="hazard-item" data-hazard="cardiac" id="hazardCardCardiac">
             <div class="hazard-item-head">
               <span class="name">Cardiovascular Deconditioning</span>
-              <span class="risk-badge nominal" id="badgeCardiac">WAITING</span>
+              <span class="risk-badge nominal" id="badgeCardiac">NOMINAL (8%)</span>
             </div>
             <div class="hazard-bar-wrap">
-              <div class="hazard-bar-fill" id="barCardiac" style="width: 0%;"></div>
+              <div class="hazard-bar-fill" id="barCardiac" style="width: 8%;"></div>
             </div>
-            <div class="hazard-desc" id="descCardiac">Requires continuous ECG + SCG sensor telemetry.</div>
+            <div class="hazard-desc" id="descCardiac">Stroke volume: 78mL. Sympathovagal balance LF/HF ratio: 1.15.</div>
           </div>
 
           <!-- Radiation -->
           <div class="hazard-item" data-hazard="radiation" id="hazardCardRad">
             <div class="hazard-item-head">
               <span class="name">GCR / SPE Radiation Damage</span>
-              <span class="risk-badge nominal" id="badgeRad">WAITING</span>
+              <span class="risk-badge nominal" id="badgeRad">BACKGROUND (4%)</span>
             </div>
             <div class="hazard-bar-wrap">
-              <div class="hazard-bar-fill" id="barRad" style="width: 0%;"></div>
+              <div class="hazard-bar-fill" id="barRad" style="width: 4%;"></div>
             </div>
-            <div class="hazard-desc" id="descRad">Requires active silicon dosimeter stream.</div>
+            <div class="hazard-desc" id="descRad">Hourly flux: 0.18 mSv/hr. Double-strand break repair active.</div>
           </div>
 
           <!-- Immune Reactivation -->
           <div class="hazard-item" data-hazard="immune" id="hazardCardImmune">
             <div class="hazard-item-head">
               <span class="name">Immune Dysregulation & Latent Virus</span>
-              <span class="risk-badge nominal" id="badgeImmune">WAITING</span>
+              <span class="risk-badge nominal" id="badgeImmune">DORMANT (9%)</span>
             </div>
             <div class="hazard-bar-wrap">
-              <div class="hazard-bar-fill" id="barImmune" style="width: 0%;"></div>
+              <div class="hazard-bar-fill" id="barImmune" style="width: 9%;"></div>
             </div>
-            <div class="hazard-desc" id="descImmune">Requires microfluidic salivary/capillary assay data.</div>
+            <div class="hazard-desc" id="descImmune">EBV/CMV saliva copy count: &lt;100/mL. Secretory IgA: 184 µg/mL.</div>
           </div>
 
           <!-- Behavioral Fatigue -->
           <div class="hazard-item" data-hazard="fatigue" id="hazardCardFatigue">
             <div class="hazard-item-head">
               <span class="name">Circadian Desynchrony & Burnout</span>
-              <span class="risk-badge nominal" id="badgeFatigue">WAITING</span>
+              <span class="risk-badge nominal" id="badgeFatigue">NOMINAL (11%)</span>
             </div>
             <div class="hazard-bar-wrap">
-              <div class="hazard-bar-fill" id="barFatigue" style="width: 0%;"></div>
+              <div class="hazard-bar-fill" id="barFatigue" style="width: 11%;"></div>
             </div>
-            <div class="hazard-desc" id="descFatigue">Requires sleep radar and acoustic prosody inputs.</div>
+            <div class="hazard-desc" id="descFatigue">PVT-B reaction latency: 232ms. Vocal acoustic jitter: 0.42%.</div>
           </div>
         </div>
       </div>
 
     </aside>
 
-    <!-- CENTER COLUMN: LIVE SIGNAL SCOPES & DIGITAL TWIN HORIZON -->
+    <!-- CENTER COLUMN: LIVE 60FPS WAVEFORM TELEMETRY & DIGITAL TWIN HORIZON -->
     <section class="center-column">
       
-      <!-- CONTROLS & DATASET REPLAY BAR -->
+      <!-- CONTROLS & TEST HARNESS BAR -->
       <div class="controls-hud-bar">
+        <!-- Noise Injection Toggle -->
+        <div class="control-group">
+          <label class="toggle-switch-label">
+            <input type="checkbox" id="noiseToggle" class="toggle-input">
+            <span class="toggle-slider"></span>
+            <span>SIMULATE TREADMILL NOISE</span>
+          </label>
+        </div>
+
+        <!-- Adaptive Wavelet Filter Toggle -->
         <div class="control-group">
           <label class="toggle-switch-label">
             <input type="checkbox" id="filterToggle" class="toggle-input" checked>
             <span class="toggle-slider"></span>
-            <span>ADAPTIVE WAVELET DENOISING (<span id="snrDisplay">READY</span>)</span>
+            <span>ADAPTIVE WAVELET DENOISING (<span id="snrDisplay">31.6 dB</span>)</span>
           </label>
         </div>
 
-        <!-- Telemetry Feed Player Controls -->
-        <div class="scenario-buttons-strip" id="playbackStrip">
-          <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: flex; align-items: center;">DATASET PLAYBACK:</span>
-          <button class="btn-scenario" id="btnPlayPause" disabled>▶ PLAY</button>
-          <button class="btn-scenario" id="btnPrevSample" disabled>⏮ PREV</button>
-          <button class="btn-scenario" id="btnNextSample" disabled>⏭ NEXT</button>
-          <span id="sampleIndexDisplay" style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted); align-self: center; margin-left: 6px;">[0 / 0]</span>
+        <!-- Hazard Anomaly Trigger Buttons -->
+        <div class="scenario-buttons-strip">
+          <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: flex; align-items: center;">TEST SCENARIOS:</span>
+          <button class="btn-scenario active-scenario" data-scenario="nominal">NOMINAL</button>
+          <button class="btn-scenario" data-scenario="sans">SANS (OPTIC)</button>
+          <button class="btn-scenario" data-scenario="cardiac">CARDIAC REMODEL</button>
+          <button class="btn-scenario" data-scenario="radiation">SPE RADIATION</button>
+          <button class="btn-scenario" data-scenario="immune">VIRAL SURGE</button>
+          <button class="btn-scenario" data-scenario="fatigue">SLEEP FATIGUE</button>
         </div>
       </div>
 
-      <!-- SCOPES -->
+      <!-- HIGH PRECISION SCOPES -->
       <div class="scopes-container">
         <!-- ECG SCOPE -->
         <div class="scope-wrapper">
           <div class="scope-header">
             <div class="scope-name">
-              <span>●</span> ELECTROCARDIOGRAM (LEAD II)
+              <span>●</span> ELECTROCARDIOGRAM (LEAD II) - 60 FPS
             </div>
             <div class="scope-telemetry-meta" id="ecgMeta">
-              CHANNEL STANDBY // AWAITING STREAM
+              QRS INTERVAL: 88ms | QT: 390ms | REAL-TIME TELEMETRY
             </div>
           </div>
           <canvas id="ecgCanvas" class="scope-canvas" height="80"></canvas>
@@ -232,7 +254,7 @@
               <span>●</span> SEISMOCARDIOGRAPHY (CHEST ACCELEROMETRY - S1/S2)
             </div>
             <div class="scope-telemetry-meta" id="scgMeta">
-              CHANNEL STANDBY // AWAITING STREAM
+              AORTIC VALVE OPENING (AO) | PRE-EJECTION PERIOD MONITOR
             </div>
           </div>
           <canvas id="scgCanvas" class="scope-canvas" height="80"></canvas>
@@ -245,7 +267,7 @@
               <span>●</span> PHOTOPLETHYSMOGRAM (PPG PULSE WAVE & RESPIRATION)
             </div>
             <div class="scope-telemetry-meta" id="ppgMeta">
-              CHANNEL STANDBY // AWAITING STREAM
+              PERIPHERAL PULSE ARRIVAL TIME: 182ms | DICROTIC NOTCH INTEGRITY
             </div>
           </div>
           <canvas id="ppgCanvas" class="scope-canvas" height="80"></canvas>
@@ -255,8 +277,8 @@
       <!-- 7-DAY FORECASTING & DIGITAL TWIN RADAR -->
       <div class="hud-card" style="flex: 1;">
         <div class="card-title-bar">
-          <h2><span class="status-dot"></span> PHYSIOLOGICAL DIGITAL TWIN & TRAJECTORY ANALYSIS</h2>
-          <span class="card-badge" id="aiStatusBadge">IDLE</span>
+          <h2><span class="status-dot"></span> PHYSIOLOGICAL DIGITAL TWIN & 7-DAY PREDICTIVE TRAJECTORY</h2>
+          <span class="card-badge" id="aiStatusBadge">ACTIVE MODEL</span>
         </div>
 
         <div class="forecast-grid">
@@ -294,14 +316,14 @@
 
         <div class="triage-box">
           <div class="triage-state">
-            <span style="font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);">STATUS:</span>
-            <span class="state-badge" id="triageSeverityBadge" style="background: rgba(255,255,255,0.08); color: var(--text-muted); border-color: rgba(255,255,255,0.15);">STANDBY</span>
+            <span style="font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);">CURRENT SEVERITY:</span>
+            <span class="state-badge" id="triageSeverityBadge">NOMINAL</span>
           </div>
           <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px;" id="triageHeadline">
-            No Active Telemetry Ingested
+            Physiological Digital Twin Stable
           </div>
           <div class="triage-insight" id="triageInsightText">
-            The autonomous decision support system is awaiting sensor telemetry or an uploaded dataset. Upload a dataset file using the button above to begin analysis.
+            All autonomic biomarkers within 1-sigma baseline. Fluid balance stable. Autonomic tone symmetric. No acute interventions required.
           </div>
         </div>
       </div>
@@ -309,32 +331,34 @@
       <!-- ACTIONABLE COUNTERMEASURE PRESCRIPTIONS -->
       <div class="hud-card" style="flex: 1;">
         <div class="card-title-bar">
-          <h2><span class="status-dot"></span> CLINICAL INTERVENTION PROTOCOLS</h2>
-          <span class="card-badge">DECISION SUPPORT</span>
+          <h2><span class="status-dot"></span> AUTONOMOUS PRESCRIPTION PROTOCOLS</h2>
+          <span class="card-badge">EVIDENCE-BASED</span>
+        </div>
+
+        <div style="font-size: 10px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+          Deep-space latency prevents mission control consult. Edge engine synthesizes verified NASA Human Research Program countermeasures:
         </div>
 
         <div class="countermeasures-list" id="countermeasuresList">
-          <div style="font-size: 11px; color: var(--text-dim); padding: 16px; text-align: center; border: 1px dashed rgba(255,255,255,0.08); border-radius: 6px;">
-            Awaiting biomarker evaluation. No clinical actions required while in standby.
-          </div>
+          <!-- Populated dynamically -->
         </div>
 
-        <button id="btnResolveIntervention" disabled style="margin-top: 14px; width: 100%; padding: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); font-family: var(--font-mono); font-size: 11px; font-weight: 700; border-radius: 6px; cursor: not-allowed;">
-          EXECUTE ALL COUNTERMEASURES
+        <button id="btnResolveIntervention" style="margin-top: 14px; width: 100%; padding: 10px; background: rgba(0, 230, 118, 0.15); border: 1px solid var(--accent-emerald); color: var(--accent-emerald); font-family: var(--font-mono); font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+          EXECUTE ALL COUNTERMEASURES & STABILIZE
         </button>
       </div>
 
       <!-- EDGE COMPUTING METRICS -->
       <div class="hud-card">
         <div class="card-title-bar">
-          <h2><span class="status-dot"></span> SYSTEM INTEGRITY</h2>
-          <span class="card-badge">ENGINE ACTIVE</span>
+          <h2><span class="status-dot"></span> SYSTEM INTEGRITY & DIAGNOSTICS</h2>
+          <span class="card-badge">OFFLINE AIRGAPPED</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: var(--font-mono); font-size: 10px;">
           <div><span style="color: var(--text-dim);">EDGE ENGINE:</span> <span style="color: var(--accent-cyan);">WASM v3.8</span></div>
-          <div><span style="color: var(--text-dim);">DATASET PIPELINE:</span> <span style="color: var(--accent-emerald);">READY</span></div>
-          <div><span style="color: var(--text-dim);">PARSER:</span> <span style="color: var(--accent-emerald);">JSON / CSV</span></div>
-          <div><span style="color: var(--text-dim);">ERRORS:</span> <span style="color: var(--accent-emerald);">0 DETECTED</span></div>
+          <div><span style="color: var(--text-dim);">LATENCY:</span> <span style="color: var(--accent-emerald);">&lt; 1.2ms</span></div>
+          <div><span style="color: var(--text-dim);">SENSOR FAULTS:</span> <span style="color: var(--accent-emerald);">0 DETECTED</span></div>
+          <div><span style="color: var(--text-dim);">DATA DROPOUT:</span> <span style="color: var(--accent-emerald);">0.00%</span></div>
         </div>
       </div>
 
@@ -346,10 +370,10 @@
   <footer class="footer-hud">
     <div>
       <span class="live-pulse"></span>
-      <span>PROJECT ASTRAL-CARE // CLEAN REPLAY & INGESTION PIPELINE READY</span>
+      <span>ASTRAL-CARE EDGE DAEMON RUNNING // AUTONOMOUS LIFE PRESERVATION SUBSYSTEM ACTIVE</span>
     </div>
     <div>
-      <span>OFFLINE ZERO-CLOUD SYSTEM ARCHITECTURE</span>
+      <span>COMPLIANT WITH NASA HUMAN INTEGRATION DESIGN HANDBOOK (HIDH) - REV 2026</span>
     </div>
   </footer>
 

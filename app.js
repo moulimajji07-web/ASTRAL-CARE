@@ -1,19 +1,13 @@
 /**
  * Project ASTRAL-CARE: Master Application Controller
- * Handles dataset file uploads (JSON / CSV), step playback, canvas rendering, and UI updates.
+ * High-performance 60fps telemetry scope rendering, hazard triggers, and audio HUD cues
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   const telemetry = new TelemetryEngine();
   const predictiveAI = new PredictiveAIEngine();
 
-  // Ingested Dataset State
-  let loadedDataset = [];
-  let currentSampleIdx = -1;
-  let isPlaying = false;
-  let playbackTimer = null;
-
-  // DOM Elements - Canvas
+  // DOM Elements - Scopes
   const ecgCanvas = document.getElementById('ecgCanvas');
   const scgCanvas = document.getElementById('scgCanvas');
   const ppgCanvas = document.getElementById('ppgCanvas');
@@ -26,44 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const forecastCtx = forecastCanvas.getContext('2d');
   const radarCtx = radarCanvas.getContext('2d');
 
-  // DOM Elements - Vitals
+  // DOM Elements - Vitals & Telemetry
   const valHR = document.getElementById('valHR');
   const statusHR = document.getElementById('statusHR');
   const valPEP = document.getElementById('valPEP');
   const statusPEP = document.getElementById('statusPEP');
   const valSpO2 = document.getElementById('valSpO2');
-  const statusSpO2 = document.getElementById('statusSpO2');
   const valResp = document.getElementById('valResp');
-  const statusResp = document.getElementById('statusResp');
   const valRNFL = document.getElementById('valRNFL');
   const statusRNFL = document.getElementById('statusRNFL');
   const valRad = document.getElementById('valRad');
   const statusRad = document.getElementById('statusRad');
 
-  // Meta & Header
-  const feedStatus = document.getElementById('feedStatus');
-  const ingestMeta = document.getElementById('ingestMeta');
-  const crewName = document.getElementById('crewName');
-  const crewRole = document.getElementById('crewRole');
-  const crewSub = document.getElementById('crewSub');
-  const telemetryStateBadge = document.getElementById('telemetryStateBadge');
-  const aiStatusBadge = document.getElementById('aiStatusBadge');
-  const statusDot = document.getElementById('statusDot');
-
-  // Scopes Meta
-  const ecgMeta = document.getElementById('ecgMeta');
-  const scgMeta = document.getElementById('scgMeta');
-  const ppgMeta = document.getElementById('ppgMeta');
-
-  // File Upload & Playback Controls
-  const btnLoadDataset = document.getElementById('btnLoadDataset');
-  const datasetFileInput = document.getElementById('datasetFileInput');
-  const btnPlayPause = document.getElementById('btnPlayPause');
-  const btnPrevSample = document.getElementById('btnPrevSample');
-  const btnNextSample = document.getElementById('btnNextSample');
-  const sampleIndexDisplay = document.getElementById('sampleIndexDisplay');
-
-  // Hazards
+  // DOM Elements - Hazard Cards
   const badgeSans = document.getElementById('badgeSans');
   const barSans = document.getElementById('barSans');
   const descSans = document.getElementById('descSans');
@@ -88,15 +57,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnResolveIntervention = document.getElementById('btnResolveIntervention');
   const emergencyBanner = document.getElementById('emergencyBanner');
   const btnDismissBanner = document.getElementById('btnDismissBanner');
-  const emergencyBannerText = document.getElementById('emergencyBannerText');
+
+  // Controls
+  const noiseToggle = document.getElementById('noiseToggle');
+  const filterToggle = document.getElementById('filterToggle');
+  const snrDisplay = document.getElementById('snrDisplay');
+  const scenarioButtons = document.querySelectorAll('.btn-scenario');
+  const crewSelect = document.getElementById('crewSelect');
+  const crewName = document.getElementById('crewName');
+  const crewRole = document.getElementById('crewRole');
 
   // Audio tone helper
   let audioCtx = null;
-  function playAudioTone(freq, duration) {
+  function playAudioTone(freq, duration, type = 'sine') {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
+      osc.type = type;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
       gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
@@ -121,167 +99,80 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', resizeCanvases);
   resizeCanvases();
 
-  // Trigger dataset file picker
-  btnLoadDataset.addEventListener('click', () => {
-    datasetFileInput.click();
+  const crewProfiles = {
+    cdr: { name: 'CDR. Sarah Vance', role: 'Mission Commander / EVA Lead', baseHR: 72 },
+    plt: { name: 'PLT. Alex Chen', role: 'Command Pilot / Systems Engineer', baseHR: 66 },
+    fe1: { name: 'FE-1. Dr. Maya Torres', role: 'Chief Medical Officer / Astrobiology', baseHR: 69 },
+    fe2: { name: 'FE-2. Marcus Sterling', role: 'Payload Specialist / Robotics Lead', baseHR: 75 }
+  };
+
+  crewSelect.addEventListener('change', (e) => {
+    const prof = crewProfiles[e.target.value];
+    if (prof) {
+      crewName.innerText = prof.name;
+      crewRole.innerText = prof.role;
+      telemetry.setHeartRate(prof.baseHR);
+      playAudioTone(880, 0.08);
+    }
   });
 
-  datasetFileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target.result);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          loadedDataset = parsed;
-          currentSampleIdx = 0;
-          initLoadedDataset();
-        } else if (typeof parsed === 'object') {
-          loadedDataset = [parsed];
-          currentSampleIdx = 0;
-          initLoadedDataset();
-        } else {
-          alert('Invalid dataset structure: Expected an array of sample records.');
-        }
-      } catch (err) {
-        alert('Could not parse JSON dataset: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
+  noiseToggle.addEventListener('change', (e) => {
+    telemetry.toggleNoise(e.target.checked);
+    playAudioTone(e.target.checked ? 320 : 640, 0.09);
   });
 
-  function initLoadedDataset() {
-    btnPlayPause.disabled = false;
-    btnPrevSample.disabled = false;
-    btnNextSample.disabled = false;
-    btnResolveIntervention.disabled = false;
-    btnResolveIntervention.style.cursor = 'pointer';
-    btnResolveIntervention.style.background = 'rgba(0, 230, 118, 0.15)';
-    btnResolveIntervention.style.borderColor = 'var(--accent-emerald)';
-    btnResolveIntervention.style.color = 'var(--accent-emerald)';
+  filterToggle.addEventListener('change', (e) => {
+    telemetry.toggleFilter(e.target.checked);
+    playAudioTone(e.target.checked ? 750 : 400, 0.09);
+  });
 
-    feedStatus.innerText = 'DATASET MOUNTED';
-    feedStatus.style.color = 'var(--accent-emerald)';
-    ingestMeta.innerText = `${loadedDataset.length} SAMPLES READY`;
-    statusDot.style.background = 'var(--accent-emerald)';
-    statusDot.style.boxShadow = '0 0 8px var(--accent-emerald)';
+  btnDismissBanner.addEventListener('click', () => {
+    emergencyBanner.classList.remove('active');
+  });
 
-    applySample(0);
-    playAudioTone(880, 0.15);
-  }
-
-  function applySample(idx) {
-    if (idx < 0 || idx >= loadedDataset.length) return;
-    currentSampleIdx = idx;
-    sampleIndexDisplay.innerText = `[${idx + 1} / ${loadedDataset.length}]`;
-
-    const sample = loadedDataset[idx];
-    predictiveAI.ingestDataSample(sample);
-
-    // Subject Details
-    crewName.innerText = sample.crew_name ? `CREW: ${sample.crew_name} (${sample.crew_id || 'ID-01'})` : 'SUBJECT RECORD';
-    crewRole.innerText = sample.flight_phase || 'Active Mission Cruise';
-    crewSub.innerText = `Sample Timestamp: ${sample.timestamp_iso || 'T+00:00:00'} | Mission Day: ${sample.mission_day || 'N/A'}`;
-    telemetryStateBadge.innerText = 'ACTIVE FEED';
-    aiStatusBadge.innerText = 'ONLINE';
-
-    // Telemetry Waveforms
-    const dev = sample.devices_telemetry || {};
-    const biopatch = dev.biopatch_vitaljacket || {};
-    const scg = dev.chest_seismocardiograph || {};
-    const ppg = dev.ring_finger_photoplethysmograph || {};
-    const oct = dev.retinal_spectral_oct_tonometer || {};
-    const dos = dev.ambient_and_personal_radiation_dosimeter || {};
-    const risks = sample.edge_ai_risk_indices || {};
-
-    // Vitals Readouts
-    valHR.innerText = biopatch.heart_rate_bpm || '--';
-    statusHR.innerText = biopatch.arrhythmia_flag ? 'ARRHYTHMIA DETECTED' : 'SINUS RHYTHM';
-    statusHR.style.color = biopatch.arrhythmia_flag ? 'var(--accent-crimson)' : 'var(--accent-emerald)';
-
-    valPEP.innerText = scg.pre_ejection_period_pep_ms || '--';
-    statusPEP.innerText = (scg.pre_ejection_period_pep_ms > 120) ? 'CONTRACTILITY DECAY' : 'CONTRACTILITY NORMAL';
-    statusPEP.style.color = (scg.pre_ejection_period_pep_ms > 120) ? 'var(--accent-amber)' : 'var(--accent-emerald)';
-
-    valSpO2.innerText = ppg.spo2_percent || '--';
-    statusSpO2.innerText = 'PERFUSION CAPTURED';
-
-    valResp.innerText = ppg.respiration_rate_brpm || '--';
-    statusResp.innerText = 'ACTIVE RESPIRATION';
-
-    valRNFL.innerText = oct.peripapillary_rnfl_thickness_um || '--';
-    statusRNFL.innerText = (oct.peripapillary_rnfl_thickness_um > 115) ? 'EDEMA FLAGGED' : 'RETINA NOMINAL';
-    statusRNFL.style.color = (oct.peripapillary_rnfl_thickness_um > 115) ? 'var(--accent-amber)' : 'var(--accent-emerald)';
-
-    valRad.innerText = dos.cumulative_mission_dose_msv || '--';
-    statusRad.innerText = dos.solar_particle_event_flag ? 'SPE IN PROGRESS' : 'BACKGROUND ONLY';
-    statusRad.style.color = dos.solar_particle_event_flag ? 'var(--accent-crimson)' : 'var(--accent-emerald)';
-
-    // Update Telemetry Engine parameters
-    telemetry.isActive = true;
-    telemetry.setHeartRate(biopatch.heart_rate_bpm || 72);
-    telemetry.setPreEjectionPeriod(scg.pre_ejection_period_pep_ms || 105);
-
-    ecgMeta.innerText = `HR: ${biopatch.heart_rate_bpm || 72} BPM | SNR: ${biopatch.snr_db || 30.5} dB`;
-    scgMeta.innerText = `PEP: ${scg.pre_ejection_period_pep_ms || 105} ms | LVET: ${scg.left_ventricular_ejection_time_lvet_ms || 280} ms`;
-    ppgMeta.innerText = `SpO2: ${ppg.spo2_percent || 98.5}% | PAT: ${ppg.pulse_arrival_time_pat_ms || 180} ms`;
-
-    // Hazard Bars Update
-    updateHazardBar(badgeSans, barSans, descSans, risks.sans_neuro_ocular_risk, 'SANS Risk Index', `${oct.peripapillary_rnfl_thickness_um || 98}µm RNFL`);
-    updateHazardBar(badgeCardiac, barCardiac, descCardiac, risks.cardiovascular_deconditioning_risk, 'Cardiac Remodeling', `Stroke Vol: ${scg.stroke_volume_ml || 75}mL`);
-    updateHazardBar(badgeRad, barRad, descRad, risks.radiation_damage_risk, 'Radiation Damage', `Flux: ${dos.instantaneous_flux_msv_per_hour || 0.18} mSv/hr`);
-    updateHazardBar(badgeImmune, barImmune, descImmune, risks.viral_reactivation_risk, 'Viral Reactivation', `Saliva EBV: ${predictiveAI.biomarkers.salivaryViralCopies || 0} c/mL`);
-    updateHazardBar(badgeFatigue, barFatigue, descFatigue, risks.circadian_burnout_risk, 'Circadian Fatigue', `PVT Latency: ${predictiveAI.biomarkers.pvLatencyMs || 240}ms`);
-
-    // Triage Box
+  btnResolveIntervention.addEventListener('click', () => {
+    predictiveAI.resolveCountermeasure();
     updateTriageUI();
+    scenarioButtons.forEach(b => {
+      b.classList.toggle('active-scenario', b.dataset.scenario === 'nominal');
+    });
+    emergencyBanner.classList.remove('active');
+    playAudioTone(1050, 0.25, 'triangle');
+  });
 
-    // Check SPE Banner
-    if (dos.solar_particle_event_flag) {
-      emergencyBannerText.innerText = `⚠️ CRITICAL: SOLAR PARTICLE EVENT FLUX DETECTED (${dos.instantaneous_flux_msv_per_hour} mSv/hr) - ENGAGE SHELTER`;
-      emergencyBanner.classList.add('active');
-      playAudioTone(440, 0.3);
-    } else {
-      emergencyBanner.classList.remove('active');
-    }
-  }
+  scenarioButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scenario = btn.dataset.scenario;
+      scenarioButtons.forEach(b => b.classList.remove('active-scenario'));
+      btn.classList.add('active-scenario');
+      
+      predictiveAI.triggerScenario(scenario);
+      
+      if (scenario === 'cardiac') {
+        telemetry.setHeartRate(92);
+        telemetry.setPreEjectionPeriod(142);
+      } else if (scenario === 'radiation') {
+        emergencyBanner.classList.add('active');
+        playAudioTone(380, 0.35, 'sawtooth');
+      } else {
+        telemetry.setHeartRate(72);
+        telemetry.setPreEjectionPeriod(105);
+        emergencyBanner.classList.remove('active');
+      }
 
-  function updateHazardBar(badge, bar, desc, riskVal, label, meta) {
-    if (riskVal === undefined || riskVal === null) {
-      badge.className = 'risk-badge nominal';
-      badge.innerText = 'NO DATA';
-      bar.style.width = '0%';
-      return;
-    }
-    const percent = Math.round(riskVal * 100);
-    bar.style.width = `${percent}%`;
-
-    if (percent >= 75) {
-      badge.className = 'risk-badge critical';
-      badge.innerText = `CRITICAL (${percent}%)`;
-      bar.style.background = 'var(--accent-crimson)';
-    } else if (percent >= 40) {
-      badge.className = 'risk-badge warning';
-      badge.innerText = `WARNING (${percent}%)`;
-      bar.style.background = 'var(--accent-amber)';
-    } else {
-      badge.className = 'risk-badge nominal';
-      badge.innerText = `NOMINAL (${percent}%)`;
-      bar.style.background = 'var(--accent-emerald)';
-    }
-    desc.innerText = `${label}: ${percent}% probability | ${meta}`;
-  }
+      playAudioTone(520, 0.1);
+      updateTriageUI();
+    });
+  });
 
   function updateTriageUI() {
     const t = predictiveAI.currentTriage;
     triageSeverityBadge.innerText = t.level;
     triageSeverityBadge.className = 'state-badge';
 
-    if (t.level.includes('CRITICAL') || t.level.includes('EMERGENCY')) {
+    if (t.level.includes('CRITICAL')) {
       triageSeverityBadge.classList.add('risk-badge', 'critical');
-    } else if (t.level.includes('WARNING') || t.level.includes('PRE_SYMPTOMATIC')) {
+    } else if (t.level.includes('WARNING') || t.level.includes('PRE-SYMPTOMATIC')) {
       triageSeverityBadge.classList.add('risk-badge', 'warning');
     } else {
       triageSeverityBadge.classList.add('risk-badge', 'nominal');
@@ -291,67 +182,130 @@ document.addEventListener('DOMContentLoaded', () => {
     triageInsightText.innerText = t.insight;
 
     countermeasuresList.innerHTML = '';
-    if (t.countermeasures.length === 0) {
-      countermeasuresList.innerHTML = `
-        <div style="font-size: 11px; color: var(--text-dim); padding: 12px; text-align: center; border: 1px dashed rgba(255,255,255,0.08); border-radius: 6px;">
-          ✓ All biomarkers within acceptable tolerance. No clinical actions required.
+    t.countermeasures.forEach(rx => {
+      const card = document.createElement('div');
+      card.className = 'rx-card';
+      card.innerHTML = `
+        <div class="rx-card-header">
+          <span class="rx-type">${rx.type}</span>
+          <span class="rx-dose">${rx.dose}</span>
         </div>
+        <div class="rx-title">${rx.title}</div>
+        <div class="rx-desc">${rx.desc}</div>
+        <button class="btn-execute-rx" onclick="window.triggerRxSuccess('${rx.id}')">${rx.actionText}</button>
       `;
+      countermeasuresList.appendChild(card);
+    });
+
+    valRNFL.innerText = predictiveAI.biomarkers.rnflThicknessUm;
+    statusRNFL.innerText = predictiveAI.biomarkers.rnflThicknessUm > 115 ? 'EDEMA DETECTED (+26µm)' : 'NO EDEMA';
+    statusRNFL.style.color = predictiveAI.biomarkers.rnflThicknessUm > 115 ? 'var(--accent-crimson)' : 'var(--accent-emerald)';
+
+    valPEP.innerText = telemetry.pep;
+    statusPEP.innerText = telemetry.pep > 120 ? 'CONTRACTILITY IMPAIRED' : 'CONTRACTILITY OPTIMAL';
+    statusPEP.style.color = telemetry.pep > 120 ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+
+    valRad.innerText = predictiveAI.biomarkers.sievertTotalMsv.toFixed(1);
+    statusRad.innerText = predictiveAI.biomarkers.speDosimeterRate > 1.0 ? 'SPE SURGE (EVACUATE)' : 'WITHIN CARE LIMITS';
+    statusRad.style.color = predictiveAI.biomarkers.speDosimeterRate > 1.0 ? 'var(--accent-crimson)' : 'var(--accent-emerald)';
+
+    updateHazardCards();
+  }
+
+  window.triggerRxSuccess = function(rxId) {
+    playAudioTone(880, 0.15, 'triangle');
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '40px';
+    toast.style.right = '40px';
+    toast.style.background = 'rgba(0, 230, 118, 0.95)';
+    toast.style.color = '#000';
+    toast.style.padding = '10px 16px';
+    toast.style.borderRadius = '6px';
+    toast.style.fontFamily = 'var(--font-mono)';
+    toast.style.fontWeight = '700';
+    toast.style.fontSize = '11px';
+    toast.style.boxShadow = '0 0 20px rgba(0, 230, 118, 0.5)';
+    toast.style.zIndex = '9999';
+    toast.innerText = `✓ COUNTERMEASURE LOGGED: Telemetry synchronized to crew profile`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2600);
+  };
+
+  function updateHazardCards() {
+    const s = predictiveAI.activeScenario;
+
+    if (s === 'sans') {
+      badgeSans.className = 'risk-badge warning';
+      badgeSans.innerText = 'STAGE 1 (74%)';
+      barSans.style.width = '74%';
+      barSans.style.background = 'var(--accent-amber)';
+      descSans.innerText = 'Peripapillary RNFL thickening: +26µm. Bilateral choroidal folds.';
     } else {
-      t.countermeasures.forEach(rx => {
-        const card = document.createElement('div');
-        card.className = 'rx-card';
-        card.innerHTML = `
-          <div class="rx-card-header">
-            <span class="rx-type">${rx.type}</span>
-            <span class="rx-dose">${rx.dose}</span>
-          </div>
-          <div class="rx-title">${rx.title}</div>
-          <div class="rx-desc">${rx.desc}</div>
-        `;
-        countermeasuresList.appendChild(card);
-      });
+      badgeSans.className = 'risk-badge nominal';
+      badgeSans.innerText = 'NOMINAL (12%)';
+      barSans.style.width = '12%';
+      barSans.style.background = 'var(--accent-emerald)';
+      descSans.innerText = 'Microvascular caliber normal. Optic nerve sheath diameter: 5.2mm.';
+    }
+
+    if (s === 'cardiac') {
+      badgeCardiac.className = 'risk-badge critical';
+      badgeCardiac.innerText = 'ELEVATED (81%)';
+      barCardiac.style.width = '81%';
+      barCardiac.style.background = 'var(--accent-crimson)';
+      descCardiac.innerText = 'Stroke volume: 56mL (-28%). Pre-ejection period elongated to 142ms.';
+    } else {
+      badgeCardiac.className = 'risk-badge nominal';
+      badgeCardiac.innerText = 'NOMINAL (8%)';
+      barCardiac.style.width = '8%';
+      barCardiac.style.background = 'var(--accent-emerald)';
+      descCardiac.innerText = 'Stroke volume: 78mL. Sympathovagal balance LF/HF ratio: 1.15.';
+    }
+
+    if (s === 'radiation') {
+      badgeRad.className = 'risk-badge critical';
+      badgeRad.innerText = 'CRITICAL SPE (92%)';
+      barRad.style.width = '92%';
+      barRad.style.background = 'var(--accent-crimson)';
+      descRad.innerText = `SPE flux: ${predictiveAI.biomarkers.speDosimeterRate} mSv/hr. Cumulative: ${predictiveAI.biomarkers.sievertTotalMsv.toFixed(1)} mSv.`;
+    } else {
+      badgeRad.className = 'risk-badge nominal';
+      badgeRad.innerText = 'BACKGROUND (4%)';
+      barRad.style.width = '4%';
+      barRad.style.background = 'var(--accent-emerald)';
+      descRad.innerText = 'Hourly flux: 0.18 mSv/hr. Double-strand break repair active.';
+    }
+
+    if (s === 'immune') {
+      badgeImmune.className = 'risk-badge warning';
+      badgeImmune.innerText = 'REACTIVATION (78%)';
+      barImmune.style.width = '78%';
+      barImmune.style.background = 'var(--accent-amber)';
+      descImmune.innerText = `EBV/CMV saliva copy count: 2,850/mL. Secretory IgA: 62 µg/mL.`;
+    } else {
+      badgeImmune.className = 'risk-badge nominal';
+      badgeImmune.innerText = 'DORMANT (9%)';
+      barImmune.style.width = '9%';
+      barImmune.style.background = 'var(--accent-emerald)';
+      descImmune.innerText = 'EBV/CMV saliva copy count: <100/mL. Secretory IgA: 184 µg/mL.';
+    }
+
+    if (s === 'fatigue') {
+      badgeFatigue.className = 'risk-badge warning';
+      badgeFatigue.innerText = 'FATIGUED (72%)';
+      barFatigue.style.width = '72%';
+      barFatigue.style.background = 'var(--accent-amber)';
+      descFatigue.innerText = `PVT reaction latency: 385ms (+153ms). Acoustic vocal jitter: 1.48%.`;
+    } else {
+      badgeFatigue.className = 'risk-badge nominal';
+      badgeFatigue.innerText = 'NOMINAL (11%)';
+      barFatigue.style.width = '11%';
+      barFatigue.style.background = 'var(--accent-emerald)';
+      descFatigue.innerText = 'PVT-B reaction latency: 232ms. Vocal acoustic jitter: 0.42%.';
     }
   }
 
-  // Playback Controls
-  btnPlayPause.addEventListener('click', () => {
-    if (isPlaying) {
-      clearInterval(playbackTimer);
-      isPlaying = false;
-      btnPlayPause.innerText = '▶ PLAY';
-    } else {
-      isPlaying = true;
-      btnPlayPause.innerText = '⏸ PAUSE';
-      playbackTimer = setInterval(() => {
-        let nextIdx = (currentSampleIdx + 1) % loadedDataset.length;
-        applySample(nextIdx);
-      }, 2500);
-    }
-  });
-
-  btnNextSample.addEventListener('click', () => {
-    if (currentSampleIdx < loadedDataset.length - 1) {
-      applySample(currentSampleIdx + 1);
-    }
-  });
-
-  btnPrevSample.addEventListener('click', () => {
-    if (currentSampleIdx > 0) {
-      applySample(currentSampleIdx - 1);
-    }
-  });
-
-  btnDismissBanner.addEventListener('click', () => {
-    emergencyBanner.classList.remove('active');
-  });
-
-  btnResolveIntervention.addEventListener('click', () => {
-    playAudioTone(1050, 0.2);
-    alert('✓ Clinical intervention logged to medical record. Re-evaluating next dataset frame.');
-  });
-
-  // Oscilloscope Renderer
   function renderScopeTrace(ctx, canvas, buffer, strokeColor, scaleY) {
     const rect = canvas.getBoundingClientRect();
     const w = rect.width;
@@ -359,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Grid lines
     ctx.strokeStyle = 'rgba(72, 110, 160, 0.12)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -375,6 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = 2;
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = strokeColor;
     ctx.beginPath();
 
     const step = w / (buffer.length - 1);
@@ -385,6 +340,11 @@ document.addEventListener('DOMContentLoaded', () => {
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    const scanX = w - 4;
+    ctx.fillStyle = strokeColor;
+    ctx.fillRect(scanX, 0, 2, h);
   }
 
   function renderForecastChart() {
@@ -394,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     forecastCtx.clearRect(0, 0, w, h);
 
-    // Chart grid
     forecastCtx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
     forecastCtx.lineWidth = 1;
     forecastCtx.beginPath();
@@ -405,22 +364,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     forecastCtx.stroke();
 
-    if (!predictiveAI.hasActiveData) {
-      forecastCtx.fillStyle = '#4f637f';
-      forecastCtx.font = '11px monospace';
-      forecastCtx.textAlign = 'center';
-      forecastCtx.fillText('STANDBY: LOAD DATASET TO PROJECT TRAJECTORIES', w / 2, h / 2);
-      return;
-    }
-
     const days = predictiveAI.forecastDays;
     const unmit = predictiveAI.unmitigatedCurve;
     const mit = predictiveAI.mitigatedCurve;
     const xStep = (w - 50) / (days.length - 1);
 
-    // Red Line
     forecastCtx.strokeStyle = '#ff1744';
-    forecastCtx.lineWidth = 2;
+    forecastCtx.lineWidth = 2.5;
     forecastCtx.setLineDash([4, 4]);
     forecastCtx.beginPath();
     for (let i = 0; i < unmit.length; i++) {
@@ -432,9 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
     forecastCtx.stroke();
     forecastCtx.setLineDash([]);
 
-    // Cyan Line
     forecastCtx.strokeStyle = '#00e5ff';
-    forecastCtx.lineWidth = 2;
+    forecastCtx.lineWidth = 2.5;
     forecastCtx.beginPath();
     for (let i = 0; i < mit.length; i++) {
       const x = 35 + i * xStep;
@@ -444,13 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     forecastCtx.stroke();
 
-    // Labels
     forecastCtx.fillStyle = '#8b9bb4';
     forecastCtx.font = '9px monospace';
-    forecastCtx.textAlign = 'center';
     for (let i = 0; i < days.length; i++) {
       const x = 35 + i * xStep;
-      forecastCtx.fillText(days[i], x, h - 8);
+      forecastCtx.fillText(days[i], x - 12, h - 8);
     }
   }
 
@@ -464,14 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     radarCtx.clearRect(0, 0, w, h);
 
-    if (!predictiveAI.hasActiveData) {
-      radarCtx.fillStyle = '#4f637f';
-      radarCtx.font = '11px monospace';
-      radarCtx.textAlign = 'center';
-      radarCtx.fillText('STANDBY: CAPACITY VECTOR IDLE', centerX, centerY);
-      return;
-    }
-
     const keys = [
       { key: 'cardiovascular', label: 'CARDIAC' },
       { key: 'neuroOcular', label: 'OCULAR' },
@@ -483,7 +422,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const angleStep = (Math.PI * 2) / keys.length;
 
-    // Rings
     radarCtx.strokeStyle = 'rgba(72, 110, 160, 0.2)';
     radarCtx.lineWidth = 1;
     for (let r = 0.25; r <= 1.0; r += 0.25) {
@@ -499,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
       radarCtx.stroke();
     }
 
-    // Axes
     radarCtx.fillStyle = '#8b9bb4';
     radarCtx.font = '8.5px monospace';
     for (let i = 0; i < keys.length; i++) {
@@ -518,14 +455,13 @@ document.addEventListener('DOMContentLoaded', () => {
       radarCtx.fillText(keys[i].label, labelX, labelY);
     }
 
-    // Polygon
     radarCtx.fillStyle = 'rgba(0, 229, 255, 0.2)';
     radarCtx.strokeStyle = '#00e5ff';
     radarCtx.lineWidth = 2;
     radarCtx.beginPath();
 
     for (let i = 0; i < keys.length; i++) {
-      const val = (predictiveAI.indices[keys[i].key] || 50) / 100;
+      const val = (predictiveAI.indices[keys[i].key] || 90) / 100;
       const a = i * angleStep - Math.PI / 2;
       const x = centerX + Math.cos(a) * (radius * val);
       const y = centerY + Math.sin(a) * (radius * val);
@@ -537,19 +473,23 @@ document.addEventListener('DOMContentLoaded', () => {
     radarCtx.stroke();
   }
 
-  // Animation Loop
-  let frame = 0;
+  updateTriageUI();
+
+  let frameCount = 0;
   function animationLoop() {
-    frame++;
+    frameCount++;
     telemetry.tick();
 
     renderScopeTrace(ecgCtx, ecgCanvas, telemetry.ecgBuffer, '#00e5ff', 24);
     renderScopeTrace(scgCtx, scgCanvas, telemetry.scgBuffer, '#b388ff', 36);
     renderScopeTrace(ppgCtx, ppgCanvas, telemetry.ppgBuffer, '#00e676', 32);
 
-    if (frame % 15 === 0) {
+    snrDisplay.innerText = `${telemetry.snr.toFixed(1)} dB`;
+
+    if (frameCount % 15 === 0) {
       renderForecastChart();
       renderRadarChart();
+      valHR.innerText = telemetry.heartRate;
     }
 
     requestAnimationFrame(animationLoop);

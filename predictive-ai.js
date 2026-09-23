@@ -1,124 +1,238 @@
 /**
- * Project ASTRAL-CARE: Master Predictive AI Engine
- * Operates purely on ingested datasets. Does not auto-generate mock predictions.
+ * Project ASTRAL-CARE: Predictive AI & Digital Twin Engine
+ * Contains active baseline spaceflight physiological simulation & scenario triggers
  */
 
 class PredictiveAIEngine {
   constructor() {
-    this.hasActiveData = false;
-    this.currentSample = null;
+    this.activeScenario = 'nominal';
 
-    // Physiological Indices (0 - 100)
     this.indices = {
-      cardiovascular: 0,
-      neuroOcular: 0,
-      musculoskeletal: 0,
-      immuneResilience: 0,
-      cognitivePsych: 0,
-      radiationTolerance: 0
+      cardiovascular: 94,
+      neuroOcular: 96,
+      musculoskeletal: 91,
+      immuneResilience: 89,
+      cognitivePsych: 95,
+      radiationTolerance: 98
     };
 
-    // Subclinical Biomarkers
     this.biomarkers = {
-      rnflThicknessUm: null,
-      iopMmHg: null,
-      salivaryViralCopies: null,
-      salivaryCortisol: null,
-      pvLatencyMs: null,
-      vocalJitterPercent: null,
-      sievertTotalMsv: null,
-      speDosimeterRate: null
+      rnflThicknessUm: 98,
+      iopMmHg: 14.2,
+      salivaryViralCopies: 40,
+      salivaryCortisol: 12.4,
+      pvLatencyMs: 232,
+      vocalJitterPercent: 0.42,
+      sievertTotalMsv: 84.5,
+      speDosimeterRate: 0.18
     };
 
     this.forecastDays = ['Day 0', 'Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6'];
-    this.unmitigatedCurve = [];
-    this.mitigatedCurve = [];
+    this.unmitigatedCurve = [94, 91, 87, 81, 74, 66, 58];
+    this.mitigatedCurve = [94, 93, 92, 94, 95, 96, 96];
 
     this.currentTriage = {
-      level: 'STANDBY',
-      title: 'No Active Telemetry Ingested',
-      insight: 'The autonomous decision support system is awaiting sensor telemetry or an uploaded dataset. Upload a dataset file using the button above to begin analysis.',
-      countermeasures: []
-    };
-  }
-
-  /**
-   * Ingest a single frame/row from user dataset
-   */
-  ingestDataSample(sample) {
-    if (!sample) return;
-    this.hasActiveData = true;
-    this.currentSample = sample;
-
-    const dev = sample.devices_telemetry || {};
-    const risks = sample.edge_ai_risk_indices || {};
-    const triage = sample.cdss_triage_decision || {};
-
-    // Extract Vitals
-    if (dev.retinal_spectral_oct_tonometer) {
-      this.biomarkers.rnflThicknessUm = dev.retinal_spectral_oct_tonometer.peripapillary_rnfl_thickness_um;
-      this.biomarkers.iopMmHg = dev.retinal_spectral_oct_tonometer.intraocular_pressure_iop_mmhg;
-    }
-    if (dev.ambient_and_personal_radiation_dosimeter) {
-      this.biomarkers.sievertTotalMsv = dev.ambient_and_personal_radiation_dosimeter.cumulative_mission_dose_msv;
-      this.biomarkers.speDosimeterRate = dev.ambient_and_personal_radiation_dosimeter.instantaneous_flux_msv_per_hour;
-    }
-    if (dev.portable_sweat_saliva_lab_on_chip) {
-      this.biomarkers.salivaryViralCopies = dev.portable_sweat_saliva_lab_on_chip.salivary_ebv_dna_copies_ml;
-      this.biomarkers.salivaryCortisol = dev.portable_sweat_saliva_lab_on_chip.salivary_cortisol_nmol_l;
-    }
-    if (dev.ambient_cabin_radar_and_voice_analyzer) {
-      this.biomarkers.pvLatencyMs = dev.ambient_cabin_radar_and_voice_analyzer.pvt_reaction_latency_ms;
-      this.biomarkers.vocalJitterPercent = dev.ambient_cabin_radar_and_voice_analyzer.vocal_acoustic_jitter_percent;
-    }
-
-    // Dynamic Capacity Indices
-    this.indices.cardiovascular = Math.round((1 - (risks.cardiovascular_deconditioning_risk || 0.1)) * 100);
-    this.indices.neuroOcular = Math.round((1 - (risks.sans_neuro_ocular_risk || 0.1)) * 100);
-    this.indices.radiationTolerance = Math.round((1 - (risks.radiation_damage_risk || 0.05)) * 100);
-    this.indices.immuneResilience = Math.round((1 - (risks.viral_reactivation_risk || 0.1)) * 100);
-    this.indices.cognitivePsych = Math.round((1 - (risks.circadian_burnout_risk || 0.1)) * 100);
-    this.indices.musculoskeletal = 88;
-
-    // Projection calculation
-    const baseHealth = Math.min(...Object.values(this.indices));
-    this.unmitigatedCurve = [baseHealth];
-    this.mitigatedCurve = [baseHealth];
-
-    for (let i = 1; i <= 6; i++) {
-      this.unmitigatedCurve.push(Math.max(20, Math.round(baseHealth - (i * 7.5))));
-      this.mitigatedCurve.push(Math.min(98, Math.round(baseHealth + (i * 1.5))));
-    }
-
-    // Triage decision mapping
-    this.currentTriage = {
-      level: triage.triage_state || 'PROCESSED',
-      title: sample.scenario_state ? sample.scenario_state.replace(/_/g, ' ') : 'Telemetry Ingestion Complete',
-      insight: triage.recommended_countermeasure || 'Telemetry ingested within computational tolerance.',
-      countermeasures: triage.action_required ? [
+      level: 'NOMINAL',
+      title: 'Physiological Digital Twin Stable',
+      insight: 'All autonomic biomarkers within 1-sigma baseline. Fluid balance stable. Autonomic tone symmetric. No acute interventions required.',
+      countermeasures: [
         {
-          id: 'rx-prescribed',
-          type: 'AUTONOMOUS PROTOCOL',
-          dose: 'Clinical Intervention Required',
-          title: 'Prescribed Deep Space Countermeasure',
-          desc: triage.recommended_countermeasure || 'Protocol defined by CDSS rules engine.',
-          actionText: 'EXECUTE INTERVENTION'
+          id: 'rx-routine-1',
+          type: 'EXERCISE COUNTERMEASURE',
+          dose: 'Daily Protocol (45m)',
+          title: 'ARED High-Load Eccentric Squats & Deadlifts',
+          desc: 'Maintains bone mineral density in lumbar spine and femoral neck. Inhibits osteoclastic resorption.',
+          actionText: 'LOG ARED LOAD'
+        },
+        {
+          id: 'rx-routine-2',
+          type: 'CIRCADIAN PHOTOTHERAPY',
+          dose: '06:00 - 07:30 UTC (480nm, 10,000 lux)',
+          title: 'Morning High-Kelvin Spectrum Light Shower',
+          desc: 'Suppresses nocturnal melatonin, stimulates cortisol awakening response, and prevents circadian phase delay.',
+          actionText: 'ACTIVATE PHOTOTHERAPY'
         }
-      ] : []
+      ]
     };
   }
 
-  clearData() {
-    this.hasActiveData = false;
-    this.currentSample = null;
-    this.unmitigatedCurve = [];
-    this.mitigatedCurve = [];
-    this.currentTriage = {
-      level: 'STANDBY',
-      title: 'No Active Telemetry Ingested',
-      insight: 'The autonomous decision support system is awaiting sensor telemetry or an uploaded dataset. Upload a dataset file using the button above to begin analysis.',
-      countermeasures: []
-    };
+  triggerScenario(scenarioKey) {
+    this.activeScenario = scenarioKey;
+
+    switch (scenarioKey) {
+      case 'sans':
+        this.indices.neuroOcular = 68;
+        this.indices.cardiovascular = 84;
+        this.biomarkers.rnflThicknessUm = 124;
+        this.biomarkers.iopMmHg = 21.8;
+        this.unmitigatedCurve = [92, 85, 78, 70, 61, 52, 42];
+        this.mitigatedCurve = [92, 88, 86, 89, 91, 92, 93];
+        this.currentTriage = {
+          level: 'EARLY PRE-SYMPTOMATIC (SANS STAGE 1)',
+          title: 'Cephalad Fluid Engorgement & Optic Disc Edema Detected',
+          insight: 'AI OCT segmentation detected +26µm bilateral swelling of the Retinal Nerve Fiber Layer (RNFL) and micro-vascular tortuosity 4 days before visual scotoma.',
+          countermeasures: [
+            {
+              id: 'rx-sans-1',
+              type: 'HEMODYNAMIC COUNTERMEASURE',
+              dose: 'LBNP -35 mmHg for 2.5 hours / session',
+              title: 'Lower Body Negative Pressure (LBNP) Sealing',
+              desc: 'Forces venous fluid redistribution caudally toward lower extremities, restoring normal intracranial and optic sheath pressures.',
+              actionText: 'ENGAGE LBNP CYCLE'
+            },
+            {
+              id: 'rx-sans-2',
+              type: 'TARGETED PHARMACOTHERAPY',
+              dose: '125mg BID oral',
+              title: 'Carbonic Anhydrase Inhibitor (Acetazolamide)',
+              desc: 'Downregulates aqueous humor and CSF production, alleviating posterior globe flattening.',
+              actionText: 'DISPENSE PHARMA'
+            }
+          ]
+        };
+        break;
+
+      case 'cardiac':
+        this.indices.cardiovascular = 62;
+        this.unmitigatedCurve = [89, 81, 72, 63, 54, 46, 38];
+        this.mitigatedCurve = [89, 84, 85, 88, 90, 91, 93];
+        this.currentTriage = {
+          level: 'SUBCLINICAL WARNING (CARDIAC REMODELING)',
+          title: 'Pre-Ejection Period (PEP) Elongation & Stroke Decay',
+          insight: 'SCG S1-S2 timing indicates PEP prolonged to 142ms (+35ms over baseline). Left ventricular stroke volume down -24% from plasma loss.',
+          countermeasures: [
+            {
+              id: 'rx-cardiac-1',
+              type: 'PLASMA EXPANSION PROTOCOL',
+              dose: '8g NaCl tablets + 1.2L isotonic fluid',
+              title: 'Acute Hyper-Hydration Salt & Fluid Loading',
+              desc: 'Restores circulating intravascular volume, elevating central venous return and cardiac end-diastolic volume.',
+              actionText: 'CONFIRM INGESTION'
+            },
+            {
+              id: 'rx-cardiac-2',
+              type: 'INTERVAL ERGOMETRY',
+              dose: 'High Intensity HIIT (4x4 min @ 90% VO2 max)',
+              title: 'Cycle Ergometer with Vibration Isolation (CEVIS)',
+              desc: 'Re-stimulates arterial baroreceptor sensitivity and cardiac beta-adrenergic responsiveness.',
+              actionText: 'START CEVIS PROTOCOL'
+            }
+          ]
+        };
+        break;
+
+      case 'radiation':
+        this.indices.radiationTolerance = 54;
+        this.indices.immuneResilience = 71;
+        this.biomarkers.speDosimeterRate = 4.2;
+        this.biomarkers.sievertTotalMsv += 18.5;
+        this.unmitigatedCurve = [95, 78, 62, 50, 41, 35, 29];
+        this.mitigatedCurve = [95, 86, 84, 85, 88, 90, 92];
+        this.currentTriage = {
+          level: 'CRITICAL ENVIRONMENTAL ALERT (SPE DETECTED)',
+          title: 'Solar Particle Event Flux - Acute High-Z Ion Surge',
+          insight: 'Cabin dosimeters indicate external coronal mass ejection. Edge model projects lethal DNA double-strand break risk without storm shelter deployment.',
+          countermeasures: [
+            {
+              id: 'rx-rad-1',
+              type: 'EMERGENCY HABITAT EVACUATION',
+              dose: 'Immediate 72-hour sequestration',
+              title: 'Retreat to Water-Wall Heavy Storm Shelter',
+              desc: 'Utilizes onboard polyethylene and greywater shielding to attenuate high-energy protons and GCR heavy ions.',
+              actionText: 'INITIATE SHELTER MODE'
+            }
+          ]
+        };
+        break;
+
+      case 'immune':
+        this.indices.immuneResilience = 58;
+        this.biomarkers.salivaryViralCopies = 2850;
+        this.biomarkers.salivaryCortisol = 28.5;
+        this.unmitigatedCurve = [88, 80, 71, 62, 54, 45, 36];
+        this.mitigatedCurve = [88, 82, 85, 89, 91, 92, 94];
+        this.currentTriage = {
+          level: 'PRE-SYMPTOMATIC INFECTION RISK (VIRAL TITER ELEVATION)',
+          title: 'Latent Herpesvirus Reactivation in Saliva Detected',
+          insight: 'Salivary point-of-care microfluidics detected a 70x spike in EBV DNA copies and elevated IL-6/TNF-alpha 48 hours before any clinical shingles/rash.',
+          countermeasures: [
+            {
+              id: 'rx-imm-1',
+              type: 'TARGETED ANTIVIRAL INTERVENTION',
+              dose: 'Valacyclovir 1000mg TID x 5 days',
+              title: 'Prophylactic Nucleoside Analogue Therapy',
+              desc: 'Inhibits viral DNA polymerase prior to cutaneous or ocular lesion manifestation.',
+              actionText: 'DISPENSE VALACYCLOVIR'
+            }
+          ]
+        };
+        break;
+
+      case 'fatigue':
+        this.indices.cognitivePsych = 59;
+        this.biomarkers.pvLatencyMs = 385;
+        this.biomarkers.vocalJitterPercent = 1.48;
+        this.unmitigatedCurve = [90, 81, 74, 65, 57, 48, 41];
+        this.mitigatedCurve = [90, 86, 88, 91, 93, 94, 95];
+        this.currentTriage = {
+          level: 'COGNITIVE IMPAIRMENT / CIRCADIAN DESYNCHRONY',
+          title: 'Psychomotor Vigilance Latency & Micro-Sleep Vulnerability',
+          insight: 'Passive vocal analysis and PVT-B task reveal a +153ms reaction delay and speech pauses consistent with 48h cumulative REM sleep deficiency.',
+          countermeasures: [
+            {
+              id: 'rx-fat-1',
+              type: 'NEURO-RECOVERY PROTOCOL',
+              dose: '90-Minute Polyphasic Strategic Nap Window',
+              title: 'Habitat Sound-Proof Sleep Pod Pressurization',
+              desc: 'Allows completion of one full slow-wave and REM cycle, flushing cerebral interstitial adenosine.',
+              actionText: 'ENTER SLEEP POD'
+            }
+          ]
+        };
+        break;
+
+      default:
+        this.indices = {
+          cardiovascular: 94,
+          neuroOcular: 96,
+          musculoskeletal: 91,
+          immuneResilience: 89,
+          cognitivePsych: 95,
+          radiationTolerance: 98
+        };
+        this.biomarkers = {
+          rnflThicknessUm: 98,
+          iopMmHg: 14.2,
+          salivaryViralCopies: 40,
+          salivaryCortisol: 12.4,
+          pvLatencyMs: 232,
+          vocalJitterPercent: 0.42,
+          sievertTotalMsv: 84.5,
+          speDosimeterRate: 0.18
+        };
+        this.unmitigatedCurve = [94, 91, 87, 81, 74, 66, 58];
+        this.mitigatedCurve = [94, 93, 92, 94, 95, 96, 96];
+        this.currentTriage = {
+          level: 'NOMINAL',
+          title: 'Physiological Digital Twin Stable',
+          insight: 'All autonomic biomarkers within 1-sigma baseline. Fluid balance stable. Autonomic tone symmetric. No acute interventions required.',
+          countermeasures: [
+            {
+              id: 'rx-routine-1',
+              type: 'EXERCISE COUNTERMEASURE',
+              dose: 'Daily Protocol (45m)',
+              title: 'ARED High-Load Eccentric Squats & Deadlifts',
+              desc: 'Maintains bone mineral density in lumbar spine and femoral neck. Inhibits osteoclastic resorption.',
+              actionText: 'LOG ARED LOAD'
+            }
+          ]
+        };
+        break;
+    }
+  }
+
+  resolveCountermeasure() {
+    this.triggerScenario('nominal');
   }
 }
 

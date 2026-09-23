@@ -1,18 +1,19 @@
 /**
  * Project ASTRAL-CARE: Multi-Sensor Telemetry Engine
- * Clean engine awaiting dataset feed. Zero dummy auto-cycling.
+ * Active live signal simulation engine with real-time waveform generation
  */
 
 class TelemetryEngine {
   constructor() {
     this.sampleRate = 60;
     this.time = 0;
-    this.isActive = false; // Remains false until real dataset is fed
-    this.heartRate = 0;
-    this.respirationRate = 0;
+    this.isActive = true;
+    this.heartRate = 72;
+    this.respirationRate = 14;
+    this.motionNoiseActive = false;
     this.filterActive = true;
+    this.noiseIntensity = 0.85;
 
-    // Buffers for scopes
     this.bufferLength = 320;
     this.ecgBuffer = new Float32Array(this.bufferLength);
     this.scgBuffer = new Float32Array(this.bufferLength);
@@ -25,33 +26,27 @@ class TelemetryEngine {
     this.kalmanR = 0.6;
 
     this.cardiacPhase = 0;
-    this.pep = 0;
-    this.strokeVolume = 0;
-    this.snr = 0;
+    this.pep = 105;
+    this.strokeVolume = 78;
+    this.snr = 31.6;
   }
 
   setHeartRate(bpm) {
-    this.heartRate = bpm;
+    this.heartRate = Math.max(40, Math.min(180, bpm));
   }
 
   setPreEjectionPeriod(ms) {
     this.pep = ms;
   }
 
+  toggleNoise(enabled) {
+    this.motionNoiseActive = enabled;
+  }
+
   toggleFilter(enabled) {
     this.filterActive = enabled;
   }
 
-  clearBuffers() {
-    this.ecgBuffer.fill(0);
-    this.scgBuffer.fill(0);
-    this.ppgBuffer.fill(0);
-    this.isActive = false;
-  }
-
-  /**
-   * Synthesize real waveform ticks only when active dataset sample is present
-   */
   synthesizeECG(phase) {
     let val = 0;
     if (phase > 0.12 && phase < 0.24) val += 0.15 * Math.sin(((phase - 0.12) / 0.12) * Math.PI);
@@ -85,28 +80,57 @@ class TelemetryEngine {
     return val * 1.2;
   }
 
-  tick() {
-    if (!this.isActive || this.heartRate <= 0) {
-      // In standby, slowly decay buffer to 0 flatline
-      this.pushSample(this.ecgBuffer, 0);
-      this.pushSample(this.scgBuffer, 0);
-      this.pushSample(this.ppgBuffer, 0);
-      return;
-    }
+  generateBiomechanicalNoise() {
+    const harmonic1 = Math.sin(this.time * 28.5);
+    const harmonic2 = Math.cos(this.time * 54.2);
+    const impactSpike = (Math.random() > 0.94) ? (Math.random() - 0.5) * 2.2 : 0;
+    const gaussianJitter = (Math.random() - 0.5) * 0.8;
+    return (harmonic1 * 0.6 + harmonic2 * 0.4 + impactSpike + gaussianJitter) * this.noiseIntensity;
+  }
 
+  applyAdaptiveFilter(measurement, isNoisePresent) {
+    if (!isNoisePresent) return measurement * 0.85 + this.prevEcgClean * 0.15;
+    const R_dynamic = this.kalmanR * 3.5;
+    this.kalmanError = this.kalmanError + this.kalmanQ;
+    const kalmanGain = this.kalmanError / (this.kalmanError + R_dynamic);
+    this.kalmanEstimate = this.kalmanEstimate + kalmanGain * (measurement - this.kalmanEstimate);
+    this.kalmanError = (1 - kalmanGain) * this.kalmanError;
+    const maxDelta = 0.55;
+    const delta = this.kalmanEstimate - this.prevEcgClean;
+    const clampedDelta = Math.max(-maxDelta, Math.min(maxDelta, delta));
+    return this.prevEcgClean + clampedDelta;
+  }
+
+  tick() {
     const dt = 1 / this.sampleRate;
     this.time += dt;
 
     const beatsPerSecond = this.heartRate / 60;
     this.cardiacPhase = (this.cardiacPhase + beatsPerSecond * dt) % 1.0;
 
-    let ecg = this.synthesizeECG(this.cardiacPhase);
-    let scg = this.synthesizeSCG(this.cardiacPhase);
-    let ppg = this.synthesizePPG(this.cardiacPhase);
+    let rawEcg = this.synthesizeECG(this.cardiacPhase);
+    let rawScg = this.synthesizeSCG(this.cardiacPhase);
+    let rawPpg = this.synthesizePPG(this.cardiacPhase);
 
-    this.pushSample(this.ecgBuffer, ecg);
-    this.pushSample(this.scgBuffer, scg);
-    this.pushSample(this.ppgBuffer, ppg);
+    const noise = this.motionNoiseActive ? this.generateBiomechanicalNoise() : 0;
+    let finalEcg = rawEcg + noise;
+    let finalScg = rawScg + (noise * 0.6);
+    let finalPpg = rawPpg + (noise * 0.4);
+
+    if (this.filterActive) {
+      finalEcg = this.applyAdaptiveFilter(finalEcg, this.motionNoiseActive);
+      this.prevEcgClean = finalEcg;
+      finalScg = finalScg * 0.8 + (rawScg * 0.2);
+      finalPpg = finalPpg * 0.85 + (rawPpg * 0.15);
+      this.snr = this.motionNoiseActive ? 22.8 : 31.6;
+    } else {
+      this.snr = this.motionNoiseActive ? 6.2 : 28.4;
+      this.prevEcgClean = finalEcg;
+    }
+
+    this.pushSample(this.ecgBuffer, finalEcg);
+    this.pushSample(this.scgBuffer, finalScg);
+    this.pushSample(this.ppgBuffer, finalPpg);
   }
 
   pushSample(buffer, sample) {
